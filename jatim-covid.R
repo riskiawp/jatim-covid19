@@ -85,5 +85,51 @@ ggplot(newdata, aes(tanggal, meninggal)) +
   theme(plot.title.position = "plot")
 
 # check out if this week is better
+# install.packages("lubridate")
+library(lubridate)
+jatimWeek <- newdata %>%
+  count(
+    tahun = year(tanggal),
+    pekan = week(tanggal),
+    wt = kasus_baru,
+    name = "jumlah"
+  )
+glimpse(jatimWeek)
 
+jatimWeek <- jatimWeek %>%
+  mutate(
+    jumlah_pekanlalu = dplyr::lag(jumlah, 1),
+    jumlah_pekanlalu = ifelse(is.na(jumlah_pekanlalu), 0, jumlah_pekanlalu),
+    lebih_baik = jumlah < jumlah_pekanlalu
+  )
+glimpse(jatimWeek)
 
+#compare with bar chart
+ggplot(jatimWeek, aes(pekan, jumlah, fill = lebih_baik)) +
+  geom_col(show.legend = FALSE) +
+  scale_x_continuous(breaks = waiver(), expand = c(0,0)) + # breaks can use comparation like 9:29
+  scale_fill_manual(values = c("TRUE" = "#617830", "FALSE"= "#450101")) +
+  labs(
+    x = "Bulan Terakhir",
+    y = "Jumlah Kasus",
+    title = "Kasus Pekanan Positif COVID19 di Jawa Timur",
+    subtitle = "Kolom hijau menunjukkan penurunan covid dibandaingkan pekan sebelumnya",
+    caption = "Sumber data: covid19.go.id"
+  ) +
+  theme_ipsum(
+    base_size = 13,
+    plot_title_size = 21,
+    grid = "Y",
+    ticks = TRUE
+  ) +
+  theme(plot.title.position = "plot")
+
+#view active cases use cumsum() funtion
+jatimAcc <- newdata %>%
+  transmute(
+    tanggal,
+    activeAcc = cumsum(kasus_baru) - cumsum(sembuh) - cumsum(meninggal),
+    recoverAcc = cumsum(sembuh),
+    deathAcc = cumsum(meninggal)
+  )
+tail(jatimAcc)
