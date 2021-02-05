@@ -124,7 +124,7 @@ ggplot(jatimWeek, aes(pekan, jumlah, fill = lebih_baik)) +
   ) +
   theme(plot.title.position = "plot")
 
-#view active cases use cumsum() funtion
+#view active cases use cumsum() funtcion
 jatimAcc <- newdata %>%
   transmute(
     tanggal,
@@ -133,3 +133,35 @@ jatimAcc <- newdata %>%
     deathAcc = cumsum(meninggal)
   )
 tail(jatimAcc)
+
+#data transformation
+# install.packages('tidyr')
+library(tidyr)
+dim(jatimAcc)
+jatimPivot <- jatimAcc %>%
+  gather(
+    key = 'kategori',
+    value = 'jumlah',
+    -tanggal
+  ) %>%
+  mutate(
+    kategori = sub(
+      pattern = "akumulasi_",
+      replacement = "",
+      kategori
+    )
+  )
+dim(jatimPivot)
+glimpse(jatimAcc)
+
+#test as pivot_longer() function
+jatimPivots <- jatimAcc %>%
+  pivot_longer(
+    cols = -tanggal,
+    names_to = 'kategori',
+    names_prefix = 'akumulasi_',
+    values_to = 'jumlah'
+  )
+dim(jatimPivots)
+
+  
